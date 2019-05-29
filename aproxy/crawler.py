@@ -13,23 +13,23 @@ PATTERN = re.compile(
 class ProxyItem(ParselItem):
 
     def custom_process(self, content):
-        match = PATTERN.search(self.sel.extract())
+        match = PATTERN.search(self.sel.xpath("string(.)").get())
         if match:
             ip = match.groups()[0]
             port = match.groups()[1]
             content['proxy'] = ip+':'+port
-            # logger.info(content)
+            logger.info(content['proxy'])
 
 
 class ProxyCrawler(Crawler):
 
     config = {
         'DOWNLOAD_DELAY': 0.5,
+        'MAX_REQUESTS_PER_HOST': 1,
     }
 
-    max_requests = 2
-
-    parsers = [Parser(css_divider='table tr', item_type=ProxyItem)]
+    parsers = [Parser(css_divider='table tr', item_type=ProxyItem),
+                Parser(css_divider='li ul', item_type=ProxyItem),]
 
     async def start_requests(self):
         for info in COMMON_TASKS:
