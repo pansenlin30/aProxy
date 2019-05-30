@@ -18,7 +18,7 @@ class ProxyItem(ParselItem):
             ip = match.groups()[0]
             port = match.groups()[1]
             content['proxy'] = ip+':'+port
-            logger.info(content['proxy'])
+            # logger.info(content['proxy'])
 
 
 class ProxyCrawler(Crawler):
