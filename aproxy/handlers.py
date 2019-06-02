@@ -9,14 +9,9 @@ _Redis = aioredis.Redis
 class ToRedisInit(ItemToRedis):
     family = 'ProxyItem'
 
-    async def on_start(self):
-        await super().on_start()
-        self.keys = ['aproxy:' + name + ':init'
-                     for name in self.crawler.config.get('VALIDATOR_NAMES', [])]
-
     async def handle_after(self, item):
         tr = self.redis.multi_exec()
-        for key in self.keys:
+        for key in self.crawler.init_keys:
             tr.sadd(key, item['proxy'])
         await tr.execute()
         # await self.redis.sadd(self.items_key, json.dumps(item['proxy']))
@@ -24,7 +19,7 @@ class ToRedisInit(ItemToRedis):
 
 class ProxyLogRedis(Handler):
     family = 'Request'
-    # logger = get_logger('validator')
+    logger = get_logger('validator')
 
     async def on_start(self):
         self.keys = self.crawler.keys
@@ -33,7 +28,7 @@ class ProxyLogRedis(Handler):
         self.redis: _Redis = self.crawler.redis
 
     async def handle_after(self, req: Request):
-        if req.exceptions:
+        if req.exceptions or not (await self.crawler.is_ok(req.response)):
             await self.update_proxy_to_redis(req.meta['proxy'], False, old_score=req.meta['old_score'])
         else:
             await self.update_proxy_to_redis(

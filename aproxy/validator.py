@@ -31,12 +31,17 @@ class HTTPValidator(Crawler):
         'REDIS_ENABLE': True,
     }
 
+    # these three elements are important for your customed validator.
     url = 'http://httpbin.org/headers?show_env'
+    ok_status = (200,)  # if any status is ok, set it to None.
+    ok_text: str = None
 
     def __init__(self):
         super().__init__()
+        self.config['LOG_TO_FILE'] = self.__class__.__name__+'.log'
         self.config['MAX_REQUESTS'] = self.config.get(
             'MAX_REQUESTS_FOR_VALIDATOR', 20)
+        self.config['MAX_WORKERS'] = 20
         self.origin_ip = ''
         self.name = self.__class__.__name__
         key_names = ['init', 'tmp', 'last', 'speed', 'score']
@@ -48,7 +53,6 @@ class HTTPValidator(Crawler):
         self.redis: aioredis.Redis
 
     async def next_requests(self):
-
         while 1:
             proxy = await self.redis.spop(self.keys['tmp'])
             if proxy:
@@ -76,6 +80,17 @@ class HTTPValidator(Crawler):
         r = Request('http://httpbin.org/headers?show_env')
         resp = await r.fetch()
         self.origin_ip = resp.json['headers']['X-Real-Ip']
+
+    async def is_ok(self, response: Response):
+        if not self.ok_status or response.status in self.ok_status:
+            if not self.ok_text or self.ok_text in response.text:
+                return True
+        return False
+
+
+class HTTPSValidator(HTTPValidator):
+    url = 'https://httpbin.org/headers?show_env'
+    pass
 
 
 if __name__ == "__main__":
