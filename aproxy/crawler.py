@@ -1,7 +1,12 @@
-from acrawler import Crawler, get_logger, Parser, Request, ParselItem
+import re
+import time
+
+from acrawler import Crawler, ParselItem, Parser, Request, get_logger
 from aproxy.rules import COMMON_TASKS
 from aproxy.task import ProxyGen
-import re
+import asyncio
+import sys
+import os
 
 logger = get_logger('aproxy')
 
@@ -23,8 +28,11 @@ class ProxyItem(ParselItem):
 class ProxyCrawler(Crawler):
 
     config = {
-        'DOWNLOAD_DELAY': 0.5,
+        'DOWNLOAD_DELAY': 1,
         'MAX_REQUESTS_PER_HOST': 1,
+        'MAX_REQUESTS': 8,
+        'REDIS_ENABLE': True,
+        'LOG_TO_FILE': 'proxycrawler.log'
     }
     middleware_config = {
         'aproxy.handlers.ToRedisInit': 500,
@@ -33,9 +41,29 @@ class ProxyCrawler(Crawler):
     parsers = [Parser(css_divider='table tr', item_type=ProxyItem),
                Parser(css_divider='li ul', item_type=ProxyItem), ]
 
+    def __init__(self):
+        super().__init__()
+        self.validator_cls = self.config.get('VALIDATORS', [])
+        self.nums = len(self.validator_cls)
+        self.init_keys = ['aproxy:' + vcls.__name__ + ':init'
+                          for vcls in self.validator_cls]
+
     async def start_requests(self):
         for info in COMMON_TASKS:
             yield ProxyGen(meta=info)
+
+    async def next_requests(self):
+        interval = self.config.get('REVALIDATE_TIME', 15 * 60)
+        await asyncio.sleep(5)
+        while 1:
+            while (await self.sdl_req.q.get_length_of_pq()) != 0:
+                await asyncio.sleep(5)
+            logger.info('Sending validating signal...')
+            tr = self.redis.multi_exec()
+            for init_key in self.init_keys:
+                tr.sunionstore(init_key.replace('init', 'tmp'), init_key)
+            await tr.execute()
+            await asyncio.sleep(interval)
 
 
 if __name__ == "__main__":
