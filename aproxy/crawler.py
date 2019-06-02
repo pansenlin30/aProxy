@@ -1,7 +1,6 @@
 from acrawler import Crawler, get_logger, Parser, Request, ParselItem
 from aproxy.rules import COMMON_TASKS
 from aproxy.task import ProxyGen
-from aproxy.handlers import *
 import re
 
 logger = get_logger('aproxy')
@@ -27,9 +26,12 @@ class ProxyCrawler(Crawler):
         'DOWNLOAD_DELAY': 0.5,
         'MAX_REQUESTS_PER_HOST': 1,
     }
+    middleware_config = {
+        'aproxy.handlers.ToRedisInit': 500,
+    }
 
     parsers = [Parser(css_divider='table tr', item_type=ProxyItem),
-                Parser(css_divider='li ul', item_type=ProxyItem),]
+               Parser(css_divider='li ul', item_type=ProxyItem), ]
 
     async def start_requests(self):
         for info in COMMON_TASKS:
