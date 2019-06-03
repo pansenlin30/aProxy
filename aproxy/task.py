@@ -1,6 +1,10 @@
 from acrawler.task import Task
-from acrawler import Request, SkipTaskError
+from acrawler import Request, Item
 import random
+
+
+class ProxyItemForWeb(Item):
+    pass
 
 
 class ProxyGen(Task):

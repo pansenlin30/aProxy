@@ -1,9 +1,9 @@
 import re
 import time
 
-from acrawler import Crawler, ParselItem, Parser, Request, get_logger
+from acrawler import Crawler, ParselItem, Parser, Request, get_logger, Item
 from aproxy.rules import COMMON_TASKS
-from aproxy.task import ProxyGen
+from aproxy.task import ProxyGen, ProxyItemForWeb
 import asyncio
 import sys
 import os
@@ -28,14 +28,16 @@ class ProxyItem(ParselItem):
 class ProxyCrawler(Crawler):
 
     config = {
-        'DOWNLOAD_DELAY': 1,
+        'DOWNLOAD_DELAY': 2,
         'MAX_REQUESTS_PER_HOST': 1,
         'MAX_REQUESTS': 8,
         'REDIS_ENABLE': True,
+        'WEB_ENABLE': True,
         'LOG_TO_FILE': 'proxycrawler.log'
     }
     middleware_config = {
         'aproxy.handlers.ToRedisInit': 500,
+        'aproxy.handlers.WebQuery': 2000,
     }
 
     parsers = [Parser(css_divider='table tr', item_type=ProxyItem),
@@ -43,7 +45,7 @@ class ProxyCrawler(Crawler):
 
     def __init__(self):
         super().__init__()
-        self.validator_cls = self.config.get('VALIDATORS', [])
+        self.validator_cls = self.config.get('VALIDATORS', {}).values()
         self.nums = len(self.validator_cls)
         self.init_keys = ['aproxy:' + vcls.__name__ + ':init'
                           for vcls in self.validator_cls]
@@ -64,6 +66,14 @@ class ProxyCrawler(Crawler):
                 tr.sunionstore(init_key.replace('init', 'tmp'), init_key)
             await tr.execute()
             await asyncio.sleep(interval)
+
+    async def web_add_task_query(self, query: dict = None):
+        validator = query.pop('v', 'https')
+        count = int(query.pop('c', 1))
+        downvote = query.popall('d', [])
+        task = ProxyItemForWeb(
+            meta={'validator': validator, 'count': count, 'downvote': downvote})
+        yield task
 
 
 if __name__ == "__main__":
