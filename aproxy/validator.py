@@ -51,8 +51,13 @@ class HTTPValidator(Crawler):
             k: 'aproxy:' + self.name + ':' + k for k in key_names
         }
         self.redis: aioredis.Redis
+        self.interval = self.config.get('REVALIDATE_TIME', 15 * 60)
+        self.pq_key = 'acrawler:' + self.name + ':' + 'q:pq'
 
     async def next_requests(self):
+        await self.redis.delete(self.keys['tmp'])
+        await self.redis.delete(self.pq_key)
+        self.create_task(self.transfer_tmp())
         while 1:
             proxy = await self.redis.spop(self.keys['tmp'])
             if proxy:
@@ -71,6 +76,11 @@ class HTTPValidator(Crawler):
                 await self.add_task(req)
             else:
                 await asyncio.sleep(5)
+
+    async def transfer_tmp(self):
+        while 1:
+            await self.redis.sunionstore(self.keys['tmp'], self.keys['init'])
+            await asyncio.sleep(self.interval)
 
     async def start_requests(self):
         pass

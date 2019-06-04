@@ -42,17 +42,19 @@ class ProxyCrawler(Crawler):
             yield ProxyGen(meta=info)
 
     async def next_requests(self):
-        interval = self.config.get('REVALIDATE_TIME', 15 * 60)
         await asyncio.sleep(5)
-        while 1:
-            while (await self.sdl_req.q.get_length_of_pq()) != 0:
-                await asyncio.sleep(5)
-            logger.info('Sending validating signal...')
-            tr = self.redis.multi_exec()
-            for init_key in self.init_keys:
-                tr.sunionstore(init_key.replace('init', 'tmp'), init_key)
-            await tr.execute()
-            await asyncio.sleep(interval)
+        while (await self.sdl_req.q.get_length_of_pq()) != 0:
+            await asyncio.sleep(5)
+        logger.info('Sending validating signal...')
+        tr = self.redis.multi_exec()
+
+        for init_key in self.init_keys:
+            pq_key = init_key.replace(
+                'aproxy', 'acrawler').replace(':init', ':q:pq')
+            tr.delete(pq_key)
+            tr.sunionstore(init_key.replace('init', 'tmp'), init_key)
+        await tr.execute()
+        pass
 
     async def web_add_task_query(self, query: dict = None):
         validator = query.pop('v', 'https')

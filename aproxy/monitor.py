@@ -28,6 +28,7 @@ class CustomCollector:
         self.keys = {
             k: 'aproxy:' + self.name + ':' + k for k in key_names
         }
+        self.pq_key = 'acrawler:' + self.name + ':' + 'q:pq'
         self.score_limit = self.crawler.config.get('SCORE_LIMIT')
         self.speed_limit = self.crawler.config.get('SPEED_LIMIT')
         self.ttl_limit = self.crawler.config.get('TTL_LIMIT')
@@ -36,7 +37,7 @@ class CustomCollector:
         start_time = int(time.time()) - self.ttl_limit
         tr = self.redis.multi_exec()
         tr.scard(self.keys['init'])
-        tr.scard(self.keys['tmp'])
+        tr.zcard(self.pq_key)
         tr.zrevrangebyscore(self.keys['score'], min=self.score_limit)
         tr.zrevrangebyscore(self.keys['last'], min=start_time)
         tr.zrangebyscore(self.keys['speed'], 0,
@@ -46,7 +47,7 @@ class CustomCollector:
         available_proxies = len(set(r[2]) & set(r[3]) & set(r[4]))
 
         yield GaugeMetricFamily('init_proxies', 'a', r[0])
-        yield GaugeMetricFamily('to_validated_proxies', 'total proxies to validate', r[1])
+        yield GaugeMetricFamily('to_validated_proxies', 'proxies to validate', r[1])
         yield GaugeMetricFamily('scored_proxies', 'high score proxies', len(r[2]))
         yield GaugeMetricFamily('alive_proxies', 'proxies validated recently', len(r[3]))
         yield GaugeMetricFamily('speed_proxies', 'high speed proxies', len(r[4]))

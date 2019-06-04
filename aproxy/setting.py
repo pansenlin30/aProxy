@@ -1,5 +1,5 @@
 from aproxy.validator import HTTPValidator, HTTPSValidator
-MAX_REQUESTS_FOR_VALIDATOR = 100
+MAX_REQUESTS_FOR_VALIDATOR = 200
 
 
 # VALIDATORS = [HTTPValidator, HTTPSValidator]
@@ -7,12 +7,12 @@ MAX_REQUESTS_FOR_VALIDATOR = 100
 
 # key is set for web query
 VALIDATORS = {
-    'http': HTTPValidator,
+    # 'http': HTTPValidator,
     'https': HTTPSValidator
 }
 
-# 15min
-REVALIDATE_TIME = 10 * 60
+# 20min
+REVALIDATE_TIME = 20 * 60
 
 
 SCORE_LIMIT = 2
