@@ -26,3 +26,9 @@ WEB_PORT = 8079
 
 EXPORTER_LISTEN_HOST = 'localhost'
 EXPORTER_LISTEN_PORT = 8000
+
+REQUEST_CONFIG = {
+    'headers': {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
+    },
+}
