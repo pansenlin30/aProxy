@@ -3,32 +3,18 @@ import time
 
 from acrawler import Crawler, ParselItem, Parser, Request, get_logger, Item
 from aproxy.rules import COMMON_TASKS
-from aproxy.task import ProxyGen, ProxyItemForWeb
+from aproxy.task import ProxyGen, ProxyItemForWeb, ProxyParseItem
 import asyncio
 import sys
 import os
 
 logger = get_logger('aproxy')
 
-PATTERN = re.compile(
-    r'\b((?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]))\D*([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')
-
-
-class ProxyItem(ParselItem):
-
-    def custom_process(self, content):
-        match = PATTERN.search(self.sel.xpath("string(.)").get())
-        if match:
-            ip = match.groups()[0]
-            port = match.groups()[1]
-            content['proxy'] = ip+':'+port
-            # logger.info(content['proxy'])
-
 
 class ProxyCrawler(Crawler):
 
     config = {
-        'DOWNLOAD_DELAY': 2,
+        'DOWNLOAD_DELAY': 3,
         'MAX_REQUESTS_PER_HOST': 1,
         'MAX_REQUESTS': 8,
         'REDIS_ENABLE': True,
@@ -38,10 +24,11 @@ class ProxyCrawler(Crawler):
     middleware_config = {
         'aproxy.handlers.ToRedisInit': 500,
         'aproxy.handlers.WebQuery': 2000,
+        'aproxy.handlers.AddCookie': 500,
     }
 
-    parsers = [Parser(css_divider='table tr', item_type=ProxyItem),
-               Parser(css_divider='li ul', item_type=ProxyItem), ]
+    parsers = [Parser(css_divider='table tr', item_type=ProxyParseItem),
+               Parser(css_divider='li ul', item_type=ProxyParseItem), ]
 
     def __init__(self):
         super().__init__()
