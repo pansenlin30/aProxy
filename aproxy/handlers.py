@@ -1,11 +1,35 @@
-from acrawler import Handler, register, SkipTaskError, Request, get_logger
-from acrawler.handlers import ItemToRedis
-from collections import defaultdict
-import random
 import json
+import random
 import time
+from collections import defaultdict
+from http.cookies import Morsel
+
 import aioredis
+from yarl import URL
+
+from acrawler import (Handler, Parser, Request, SkipTaskError, get_logger,
+                      register)
+from acrawler.handlers import ItemToRedis
+
 _Redis = aioredis.Redis
+
+
+class AddCookie(Handler):
+    family = 'ProxyGen'
+
+    async def on_start(self):
+        self.cb_table = {}
+
+    async def handle_before(self, task):
+        if 'cookie' in task.meta:
+            cookie_string = task.meta['cookie']
+            url = URL(task.meta['resource'][0])
+            for cs in cookie_string.split('; '):
+                cs = cs.strip()
+
+                self.crawler._session.cookie_jar.update_cookies(
+                    {cs.split('=')[0]: cs.split(
+                        '=')[-1]}, url)
 
 
 class ToRedisInit(ItemToRedis):
