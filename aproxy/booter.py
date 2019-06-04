@@ -2,6 +2,7 @@ from multiprocessing import Process
 from multiprocessing.pool import Pool
 from aproxy.crawler import ProxyCrawler
 from aproxy.setting import VALIDATORS
+from aproxy.monitor import run_monitor
 import signal
 
 
@@ -19,6 +20,10 @@ if __name__ == "__main__":
         proc.start()
         procs.append(proc)
     print('aProxy starts working...')
+
+    monitor = Process(target=run_monitor)
+    monitor.start()
+    procs.append(monitor)
 
     try:
         cproc.join()
