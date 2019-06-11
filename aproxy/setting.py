@@ -8,12 +8,13 @@ MAX_REQUESTS_FOR_VALIDATOR = 200
 # key is set for web query
 VALIDATORS = {
     # 'http': HTTPValidator,
-    'https': HTTPSValidator
+    'https': HTTPSValidator,
 }
 
-# 20min
-REVALIDATE_TIME = 20 * 60
+# 10min
+REVALIDATE_TIME = 15 * 60
 
+DISABLE_COOKIES = True
 
 SCORE_LIMIT = 2
 SPEED_LIMIT = 10  # in second

@@ -103,5 +103,13 @@ class HTTPSValidator(HTTPValidator):
     pass
 
 
+class DoubanValidator(HTTPValidator):
+    url = 'https://movie.douban.com/'
+
+
+class BiliValidator(HTTPValidator):
+    url = 'http://api.bilibili.com/x/web-interface/newlist?rid=2'
+
+
 if __name__ == "__main__":
     HTTPValidator().run()
