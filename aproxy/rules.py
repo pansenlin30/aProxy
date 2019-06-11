@@ -1,3 +1,4 @@
+from aproxy.task import operate_on_66ip_page
 
 COMMON_TASKS = [
     {
@@ -6,6 +7,7 @@ COMMON_TASKS = [
                     ['http://www.xicidaili.com/wn/%s' % i for i in range(1, 6)] +
                     ['http://www.xicidaili.com/wt/%s' %
                         i for i in range(1, 6)],
+        'interval': 60 * 2,
         'enable':1,
 
     },
@@ -31,19 +33,19 @@ COMMON_TASKS = [
         'enable':1,
     },
     {
-        'name': 'mrhinkydink.com',
-        'resource': ['http://www.mrhinkydink.com/proxies.htm'],
-        'interval': 2 * 60,
-        'enable':1,
-    },
-    {
         'name': '66ip.cn',
         'resource': ['http://www.66ip.cn/%s.html' % i for i in range(1, 3)] +
                     ['http://www.66ip.cn/areaindex_%s/%s.html' % (i, j)
                      for i in range(1, 35) for j in range(1, 3)],
-        'interval': 60,
-        'cookie': '__jsluid=8ce026af04fa3bfeba627249cc79e8fe; __jsl_clearance=1559650713.003|0|yzDrfDpyBtyRNOftMjo%2FDF9PcfQ%3D',
+        'interval': 2 * 60,
+        'browser': operate_on_66ip_page,
         'enable': 1,
+    },
+    {
+        'name': 'mrhinkydink.com',
+        'resource': ['http://www.mrhinkydink.com/proxies.htm'],
+        'interval': 2 * 60,
+        'enable':1,
     },
     {
         'name': 'iphai.com',
@@ -99,14 +101,14 @@ COMMON_TASKS = [
 ]
 
 TEST_TASKS = [
-
     {
         'name': '66ip.cn',
         'resource': ['http://www.66ip.cn/%s.html' % i for i in range(1, 3)] +
                     ['http://www.66ip.cn/areaindex_%s/%s.html' % (i, j)
                      for i in range(1, 35) for j in range(1, 3)],
         'interval': 2 * 60,
-        'cookie': '__jsluid=8ce026af04fa3bfeba627249cc79e8fe; __jsl_clearance=1559650713.003|0|yzDrfDpyBtyRNOftMjo%2FDF9PcfQ%3D',
+        'browser': operate_on_66ip_page,
         'enable': 1,
     },
+
 ]

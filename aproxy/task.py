@@ -1,5 +1,7 @@
 from acrawler.task import Task
 from acrawler import Request, Item, ParselItem, Parser
+from acrawler.http import BrowserRequest
+from parsel import Selector
 import random
 import re
 
@@ -43,18 +45,34 @@ class ProxyGen(Task):
     async def _execute(self):
         if self.meta.get('enable'):
             interval_s = self.meta.get('interval', 60) * 60
-
-            cb = None
-            if 'css_divider' in self.meta:
-                css_divider = self.meta['css_divider']
-                if not css_divider in self.cb_table:
-                    self.cb_table[css_divider] = Parser(
-                        css_divider=css_divider, item_type=ProxyParseItem).parse
-                cb = self.cb_table[css_divider]
-            for url in self.meta.get('resource', []):
-                r = Request(url, priority=random.randint(
-                    0, 100), callback=self.crawler.parse, recrawl=interval_s, status_allowed=[])
-                if cb:
-                    r.add_callback(cb)
-                yield r
+            if 'browser' in self.meta:
+                for url in self.meta.get('resource', []):
+                    r = BrowserRequest(
+                        url, page_callback=self.meta['browser'], recrawl=interval_s)
+                    yield r
+            else:
+                cb = None
+                if 'css_divider' in self.meta:
+                    css_divider = self.meta['css_divider']
+                    if not css_divider in self.cb_table:
+                        self.cb_table[css_divider] = Parser(
+                            css_divider=css_divider, item_type=ProxyParseItem).parse
+                    cb = self.cb_table[css_divider]
+                for url in self.meta.get('resource', []):
+                    r = Request(url, priority=random.randint(
+                        0, 100), callback=self.crawler.parse, recrawl=interval_s, status_allowed=[])
+                    if cb:
+                        r.add_callback(cb)
+                    yield r
         yield None
+
+
+async def operate_on_66ip_page(page, response):
+    if response.status != 200:
+        await page.waitForNavigation({'waitUntil': 'domcontentloaded'})
+    main_sel = Selector(await page.text())
+    for sel in main_sel.css('table tr'):
+        yield ProxyParseItem(selector=sel)
+    # for task in parse_text(await page.text()):
+    #     yield task
+    # await page.screenshot(show=True)
