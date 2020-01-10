@@ -2,7 +2,7 @@ import re
 import time
 
 from acrawler import Crawler, ParselItem, Parser, Request, get_logger, Item
-from aproxy.rules import COMMON_TASKS
+from aproxy.rules import COMMON_TASKS, TEST_TASKS
 from aproxy.task import ProxyGen, ProxyItemForWeb, ProxyParseItem
 import asyncio
 import sys
@@ -16,15 +16,15 @@ class ProxyCrawler(Crawler):
     config = {
         'DOWNLOAD_DELAY': 3,
         'MAX_REQUESTS_PER_HOST': 1,
-        'MAX_REQUESTS': 8,
+        'MAX_REQUESTS': 12,
         'REDIS_ENABLE': True,
         'WEB_ENABLE': True,
-        'LOG_TO_FILE': 'proxycrawler.log'
+        # 'LOG_TO_FILE': 'proxycrawler.log'
     }
     middleware_config = {
         'aproxy.handlers.ToRedisInit': 500,
         'aproxy.handlers.WebQuery': 2000,
-        'aproxy.handlers.AddCookie': 500,
+        'acrawler.handlers.RequestPrepareBrowser': 1000,
     }
 
     parsers = [Parser(css_divider='table tr', item_type=ProxyParseItem),
@@ -57,7 +57,7 @@ class ProxyCrawler(Crawler):
         pass
 
     async def web_add_task_query(self, query: dict = None):
-        validator = query.pop('v', 'https')
+        validator = query.pop('v', 'bili')
         count = int(query.pop('c', 1))
         downvote = query.popall('d', [])
         task = ProxyItemForWeb(

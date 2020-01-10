@@ -30,6 +30,7 @@ class TestCrawler(Crawler):
 
     middleware_config = {
         'aproxy.handlers.AddCookie': 500,
+        'acrawler.handlers.RequestPrepareBrowser': 1000,
     }
 
     parsers = [Parser(css_divider='table tr', item_type=ProxyParseItem),

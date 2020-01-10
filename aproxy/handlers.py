@@ -35,6 +35,10 @@ class AddCookie(Handler):
 class ToRedisInit(ItemToRedis):
     family = 'ProxyItem'
 
+    async def on_start(self):
+        await super().on_start()
+        # self.crawler.redis = self.redis
+
     async def handle_after(self, item):
         tr = self.redis.multi_exec()
         for key in self.crawler.init_keys:
@@ -133,24 +137,25 @@ class WebQuery(Handler):
         for p in item.meta['downvote']:
             await self.redis.zincrby(self.keys[v]['score'], -1, p)
 
-        tr = self.redis.multi_exec()
-        tr.zrevrangebyscore(self.keys[v]['score'], min=self.score_limit)
-        tr.zrevrangebyscore(self.keys[v]['last'], min=start_time)
-        tr.zrangebyscore(self.keys[v]['speed'], 0,
-                         1000 * self.speed_limit)
-        scored_proxies, ttl_proxies, speed_proxies = await tr.execute()
-        scored_proxies, ttl_proxies, speed_proxies = set(
-            scored_proxies), set(ttl_proxies), set(speed_proxies)
-        proxies = scored_proxies & ttl_proxies & speed_proxies
-        match = 3
-        if not proxies or len(proxies) < count:
-            proxies = ttl_proxies & speed_proxies
-            match = 2
-        if not proxies or len(proxies) < count:
-            proxies = ttl_proxies | scored_proxies
-            match = 1
-        proxies = list(map(bytes.decode, proxies))
-        random.shuffle(proxies)
-        item['proxies'] = proxies[:count]
-        item['count'] = len(item['proxies'])
-        item['match'] = match
+        if count > 0:
+            tr = self.redis.multi_exec()
+            tr.zrevrangebyscore(self.keys[v]['score'], min=self.score_limit)
+            tr.zrevrangebyscore(self.keys[v]['last'], min=start_time)
+            tr.zrangebyscore(self.keys[v]['speed'], 0,
+                             1000 * self.speed_limit)
+            scored_proxies, ttl_proxies, speed_proxies = await tr.execute()
+            scored_proxies, ttl_proxies, speed_proxies = set(
+                scored_proxies), set(ttl_proxies), set(speed_proxies)
+            proxies = scored_proxies & ttl_proxies & speed_proxies
+            match = 3
+            if not proxies or len(proxies) < count:
+                proxies = ttl_proxies & speed_proxies
+                match = 2
+            if not proxies or len(proxies) < count:
+                proxies = ttl_proxies | scored_proxies
+                match = 1
+            proxies = list(map(bytes.decode, proxies))
+            random.shuffle(proxies)
+            item['proxies'] = proxies[:count]
+            item['count'] = len(item['proxies'])
+            item['match'] = match

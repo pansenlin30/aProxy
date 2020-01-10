@@ -31,7 +31,7 @@ class ProxyItem(Item):
 
 class ProxyParseItem(ParselItem):
 
-    def custom_process(self, content):
+    def custom_process(self):
         # text = self.sel.xpath("string(.)").get()
         text = self.sel.xpath(".").get()
         yield from parse_text(text)

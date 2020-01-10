@@ -56,7 +56,7 @@ class CustomCollector:
 
 
 def run_monitor():
-    REGISTRY.register(CustomCollector('HTTPSValidator'))
+    REGISTRY.register(CustomCollector('BiliValidator'))
     start_http_server(EXPORTER_LISTEN_PORT, addr=EXPORTER_LISTEN_HOST)
     try:
         while True:
